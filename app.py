@@ -106,28 +106,37 @@ def kpi(col, label, value, help_txt=None):
 # Carregar / Mapear dados
 # ---------------------------------
 @st.cache_data(show_spinner=False)
-def carregar_dados():
-    st.sidebar.subheader("📥 Dados")
-    up = st.sidebar.file_uploader("CSV/Parquet conforme MIRA (veja colunas mínimas acima)", type=["csv","parquet"])
-    if up is not None:
-        try:
-            if up.name.lower().endswith(".csv"):
-                df = pd.read_csv(up)
-            else:
-                df = pd.read_parquet(up)
-            # parse datas comuns
-            for c in ["data_solicitacao","data_agendamento","data_realizacao"]:
-                if c in df.columns:
-                    df[c] = pd.to_datetime(df[c], errors="coerce").dt.tz_localize(None)
-            # completar campos auxiliares
-            if "data_solicitacao" in df:
-                df["dia"] = df["data_solicitacao"].dt.date
-                df["mes"] = df["data_solicitacao"].dt.to_period("M").dt.to_timestamp()
-            if "data_agendamento" in df and "data_solicitacao" in df:
-                df["dias_ate_agendar"] = (df["data_agendamento"] - df["data_solicitacao"]).dt.days
-            if "data_realizacao" in df and "data_solicitacao" in df:
-                df["dias_ate_realizar"] = (df["data_realizacao"] - df["data_solicitacao"]).dt.days
-            return df
+def carregar_dados(file) -> pd.DataFrame:
+    """Lê o arquivo enviado (CSV/Parquet) e prepara colunas auxiliares.
+    Se 'file' for None, gera dados simulados.
+    """
+    if file is None:
+        return gerar_dados_fake()
+
+    # leitura
+    if file.name.lower().endswith(".csv"):
+        df = pd.read_csv(file)
+    else:
+        df = pd.read_parquet(file)
+
+    # parse de datas
+    for c in ["data_solicitacao", "data_agendamento", "data_realizacao"]:
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c], errors="coerce").dt.tz_localize(None)
+
+    # colunas auxiliares
+    if "data_solicitacao" in df.columns:
+        df["dia"] = df["data_solicitacao"].dt.date
+        df["mes"] = df["data_solicitacao"].dt.to_period("M").dt.to_timestamp()
+
+    if {"data_agendamento", "data_solicitacao"}.issubset(df.columns):
+        df["dias_ate_agendar"] = (df["data_agendamento"] - df["data_solicitacao"]).dt.days
+
+    if {"data_realizacao", "data_solicitacao"}.issubset(df.columns):
+        df["dias_ate_realizar"] = (df["data_realizacao"] - df["data_solicitacao"]).dt.days
+
+    return df
+
         except Exception as e:
             st.sidebar.error(f"Falha ao ler arquivo: {e}")
     # fallback fake
@@ -251,7 +260,15 @@ with st.expander("ℹ️ Sobre o protótipo / colunas esperadas", expanded=False
         """
     )
 
-base = carregar_dados()
+# --- Widgets fora de funções cacheadas ---
+st.sidebar.subheader("📥 Dados")
+up = st.sidebar.file_uploader(
+    "CSV/Parquet conforme MIRA (veja colunas mínimas acima)",
+    type=["csv", "parquet"]
+)
+
+# --- Chamada da função cacheada, passando o arquivo ---
+base = carregar_dados(up)
 filtrado = filtros(base)
 
 # KPIs
