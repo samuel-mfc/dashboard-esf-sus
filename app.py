@@ -103,10 +103,8 @@ def kpi(col, label, value, help_txt=None):
 
 
 # ---------------------------------
-# Carregar dados (widgets + função cacheada)
+# Carregar dados (widgets + função cacheada) — sem widgets dentro do cache
 # ---------------------------------
-
-# Função cacheada: apenas lê/processa os dados
 @st.cache_data(show_spinner=False)
 def carregar_dados(file) -> pd.DataFrame:
     """Lê o arquivo enviado (CSV/Parquet) e prepara colunas auxiliares.
@@ -147,8 +145,13 @@ up = st.sidebar.file_uploader(
     type=["csv", "parquet"]
 )
 
-# --- Agora sim: carregar os dados com cache ---
+# Carregar com cache
 base = carregar_dados(up)
+
+
+# ---------------------------------
+# Filtros
+# ---------------------------------
 
 def filtros(df: pd.DataFrame):
     st.sidebar.header("⚙️ Filtros")
@@ -267,7 +270,6 @@ with st.expander("ℹ️ Sobre o protótipo / colunas esperadas", expanded=False
         """
     )
 
-base = carregar_dados()
 filtrado = filtros(base)
 
 # KPIs
