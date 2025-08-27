@@ -103,8 +103,10 @@ def kpi(col, label, value, help_txt=None):
 
 
 # ---------------------------------
-# Carregar / Mapear dados
+# Carregar dados (widgets + função cacheada)
 # ---------------------------------
+
+# Função cacheada: apenas lê/processa os dados
 @st.cache_data(show_spinner=False)
 def carregar_dados(file) -> pd.DataFrame:
     """Lê o arquivo enviado (CSV/Parquet) e prepara colunas auxiliares.
@@ -137,11 +139,16 @@ def carregar_dados(file) -> pd.DataFrame:
 
     return df
 
-        except Exception as e:
-            st.sidebar.error(f"Falha ao ler arquivo: {e}")
-    # fallback fake
-    return gerar_dados_fake()
 
+# --- Widget fora da função cacheada ---
+st.sidebar.subheader("📥 Dados")
+up = st.sidebar.file_uploader(
+    "CSV/Parquet conforme MIRA (veja colunas mínimas acima)",
+    type=["csv", "parquet"]
+)
+
+# --- Agora sim: carregar os dados com cache ---
+base = carregar_dados(up)
 
 def filtros(df: pd.DataFrame):
     st.sidebar.header("⚙️ Filtros")
@@ -260,15 +267,7 @@ with st.expander("ℹ️ Sobre o protótipo / colunas esperadas", expanded=False
         """
     )
 
-# --- Widgets fora de funções cacheadas ---
-st.sidebar.subheader("📥 Dados")
-up = st.sidebar.file_uploader(
-    "CSV/Parquet conforme MIRA (veja colunas mínimas acima)",
-    type=["csv", "parquet"]
-)
-
-# --- Chamada da função cacheada, passando o arquivo ---
-base = carregar_dados(up)
+base = carregar_dados()
 filtrado = filtros(base)
 
 # KPIs
