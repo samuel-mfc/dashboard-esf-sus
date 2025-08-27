@@ -280,8 +280,9 @@ def filtros_sidebar(df: pd.DataFrame, pop_df: pd.DataFrame) -> pd.DataFrame:
 
     # Aplicar filtros
     mask = (
-        (df["dia"] >= pd.to_datetime(dt_ini)) & (df["dia"] <= pd.to_datetime(dt_fim))
-    )
+    (df["dia"] >= dt_ini) &
+    (df["dia"] <= dt_fim)
+)
 
     if sel_unid and "(Todas)" not in sel_unid:
         mask &= df["unidade"].isin(sel_unid)
