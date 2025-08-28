@@ -1,360 +1,163 @@
-import io
-import sys
-from typing import List, Tuple
 
-import pandas as pd
-import numpy as np
 import streamlit as st
+import pandas as pd
 import plotly.express as px
 
-# =============================
-# Configuração da Página
-# =============================
-st.set_page_config(
-    page_title="Dashboard de Atendimentos Clínicos (RNDS)",
-    page_icon="🩺",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# -------------------------
+# Cria uma página
+# -------------------------
+st.set_page_config(page_title="Meu App", page_icon="🚀", layout="wide")
 
-# =============================
-# Texto de Apresentação
-# =============================
-st.title("🩺 Dashboard de Atendimentos Clínicos — RNDS")
-st.markdown(
-    """
-Este app lê um **CSV** no formato mínimo do *Registro de Atendimento Clínico (RAC)* e 
-monta um painel interativo com filtros, indicadores e gráficos. 
+# -------------------------
+# Cria o título e substítulos da página app
+# -------------------------
+st.title("App Streamlit publicado via GitHub")
+st.caption("Edite `app.py` e faça `git push` para atualizar o app!")
 
-**Como usar:** faça upload do CSV na barra lateral. Opcionalmente, exporte os dados filtrados.
-"""
-)
-
-# =============================
-# Esquema mínimo esperado
-# =============================
-REQUIRED_COLUMNS: List[str] = [
-    "identificador_nacional_individuo",
-    "identificador_estabelecimento_saude_cnes",
-    "procedencia",
-    "data_hora_atendimento_iso8601",
-    "modalidade_assistencial",
-    "carater_atendimento",
-    "profissional_identificador_cpf",
-    "profissional_numero_conselho",
-    "profissional_conselho",
-    "profissional_uf_conselho",
-    "profissional_ocupacao_cbo",
-    "profissional_responsavel",
-    "problema_diagnostico_codigo",
-    "problema_diagnostico_terminologia",
-]
-
-ALIASES = {
-    # Permite pequenas variações comuns
-    "data_hora_atendimento": "data_hora_atendimento_iso8601",
-    "data_atendimento": "data_hora_atendimento_iso8601",
-    "cnes": "identificador_estabelecimento_saude_cnes",
-    "cns_cpf": "identificador_nacional_individuo",
-}
-
-# =============================
-# Funções utilitárias
-# =============================
-
-@st.cache_data(show_spinner=False)
-def load_csv(file: io.BytesIO) -> pd.DataFrame:
-    return pd.read_csv(file, dtype=str, encoding="utf-8")
-
-
-def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    cols = {c: c.strip() for c in df.columns}
-    df = df.rename(columns=cols)
-    # Normalizar para minúsculas e mapear aliases
-    mapping = {}
-    for c in df.columns:
-        base = c
-        low = c.lower()
-        if low in ALIASES:
-            mapping[c] = ALIASES[low]
-        else:
-            mapping[c] = c
-    df = df.rename(columns=mapping)
+# -------------------------
+# Cria dados de exemplo
+# -------------------------
+@st.cache_data
+def carregar_dados():
+    dados = [
+        {"data":"2025-07-01","unidade":"Hospital A","especialidade":"Clínica Geral","sexo":"F","idade":23,"tempo_espera_min":18,"satisfacao":4,"custo":120.0},
+        {"data":"2025-07-01","unidade":"Hospital A","especialidade":"Cardiologia",  "sexo":"M","idade":67,"tempo_espera_min":35,"satisfacao":3,"custo":420.0},
+        {"data":"2025-07-02","unidade":"Hospital A","especialidade":"Pediatria",    "sexo":"F","idade":9, "tempo_espera_min":12,"satisfacao":5,"custo":90.0},
+        {"data":"2025-07-02","unidade":"Hospital B","especialidade":"Clínica Geral","sexo":"M","idade":41,"tempo_espera_min":22,"satisfacao":4,"custo":150.0},
+        {"data":"2025-07-03","unidade":"Hospital B","especialidade":"Cardiologia",  "sexo":"F","idade":72,"tempo_espera_min":40,"satisfacao":3,"custo":500.0},
+        {"data":"2025-07-03","unidade":"Hospital A","especialidade":"Ortopedia",    "sexo":"M","idade":35,"tempo_espera_min":28,"satisfacao":4,"custo":260.0},
+        {"data":"2025-07-04","unidade":"Hospital A","especialidade":"Dermatologia", "sexo":"F","idade":29,"tempo_espera_min":15,"satisfacao":5,"custo":110.0},
+        {"data":"2025-07-04","unidade":"Hospital B","especialidade":"Pediatria",    "sexo":"M","idade":6, "tempo_espera_min":10,"satisfacao":5,"custo":80.0},
+        {"data":"2025-07-05","unidade":"Hospital B","especialidade":"Clínica Geral","sexo":"F","idade":53,"tempo_espera_min":26,"satisfacao":4,"custo":140.0},
+        {"data":"2025-07-05","unidade":"Hospital A","especialidade":"Ortopedia",    "sexo":"M","idade":47,"tempo_espera_min":33,"satisfacao":3,"custo":300.0},
+    ]
+    df = pd.DataFrame(dados)
+    df["data"] = pd.to_datetime(df["data"])
     return df
 
+df = carregar_dados()
 
-def validate_schema(df: pd.DataFrame) -> Tuple[bool, List[str]]:
-    missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
-    return (len(missing) == 0, missing)
-
-
-def coerce_types(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    # Datas
-    if "data_hora_atendimento_iso8601" in df.columns:
-        df["data_hora_atendimento_iso8601"] = pd.to_datetime(
-            df["data_hora_atendimento_iso8601"], errors="coerce"
-        )
-        df["data"] = df["data_hora_atendimento_iso8601"].dt.date
-        df["ano"] = df["data_hora_atendimento_iso8601"].dt.year
-        df["mes"] = df["data_hora_atendimento_iso8601"].dt.to_period("M").astype(str)
-        df["semana"] = df["data_hora_atendimento_iso8601"].dt.strftime("%Y-%U")
-        df["hora"] = df["data_hora_atendimento_iso8601"].dt.hour
-        dias_pt = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"]
-        df["dia_semana"] = df["data_hora_atendimento_iso8601"].dt.dayofweek.map(
-            lambda i: dias_pt[i] if pd.notna(i) else None
-        )
-    # Numéricos (onde fizer sentido)
-    for c in ["identificador_estabelecimento_saude_cnes"]:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="ignore")
-    return df
-
-
-def kpi(label: str, value, help: str = ""):
-    mcol = st.metric
-    mcol(label, value, help=help)
-
-
-# =============================
-# Sidebar — Upload & Filtros
-# =============================
-st.sidebar.header("📤 Upload & Filtros")
-file = st.sidebar.file_uploader("Envie o CSV do RAC (mínimo)", type=["csv"]) 
-
-example_note = st.sidebar.expander("Ver colunas mínimas esperadas").checkbox(
-    "Mostrar lista de colunas"
-)
-if example_note:
-    st.sidebar.code("\n".join(REQUIRED_COLUMNS), language="text")
-
-if file is None:
-    st.info("Envie um arquivo CSV na barra lateral para iniciar.")
-    st.stop()
-
-# Carregar dados
-try:
-    df_raw = load_csv(file)
-except Exception as e:
-    st.error(f"Erro ao ler o CSV: {e}")
-    st.stop()
-
-# Normalizar e validar
-_df = normalize_columns(df_raw)
-ok, missing = validate_schema(_df)
-if not ok:
-    st.error(
-        "Colunas obrigatórias ausentes no CSV:\n- " + "\n- ".join(missing)
-    )
-    st.stop()
-
-# Tipos e colunas derivadas
-df = coerce_types(_df)
-
+# ------------------------- 
 # Filtros
+# ------------------------- 
+
 with st.sidebar:
-    st.markdown("---")
     st.subheader("🔎 Filtros")
-    # Intervalo de datas
-    min_date = pd.to_datetime(df["data_hora_atendimento_iso8601"].min())
-    max_date = pd.to_datetime(df["data_hora_atendimento_iso8601"].max())
-    date_range = st.date_input(
-        "Período do atendimento",
-        value=(min_date.date(), max_date.date()),
-        min_value=min_date.date(),
-        max_value=max_date.date(),
-    )
 
-    modalidades = sorted(df["modalidade_assistencial"].dropna().unique())
-    sel_modalidades = st.multiselect(
-        "Modalidade assistencial",
-        options=modalidades,
-        default=modalidades,
-    )
+    # intervalo de datas sugerido pelo min/max do DF
+    dmin, dmax = df["data"].min().date(), df["data"].max().date()
+    f_data = st.date_input("Período", value=(dmin, dmax), min_value=dmin, max_value=dmax)
 
-    caracteres = sorted(df["carater_atendimento"].dropna().unique())
-    sel_carater = st.multiselect(
-        "Caráter do atendimento",
-        options=caracteres,
-        default=caracteres,
-    )
+    # filtros categóricos (multiselect) com todas as opções pré-selecionadas
+    f_unidade = st.multiselect("Unidade", 
+                               sorted(df["unidade"].unique().tolist()),
+                               default=sorted(df["unidade"].unique().tolist()))
+    
+    f_esp = st.multiselect("Especialidade", 
+                           sorted(df["especialidade"].unique().tolist()),
+                           default=sorted(df["especialidade"].unique().tolist()))
+    
+    f_sexo = st.multiselect("Sexo", 
+                            sorted(df["sexo"].unique().tolist()),
+                            default=sorted(df["sexo"].unique().tolist()))
 
-    procedencias = sorted(df["procedencia"].dropna().unique())
-    sel_procedencia = st.multiselect(
-        "Procedência",
-        options=procedencias,
-        default=procedencias,
-    )
+    # filtros numéricos (sliders com intervalo)
+    f_idade = st.slider("Idade", 
+                        int(df["idade"].min()), 
+                        int(df["idade"].max()),
+                        (int(df["idade"].min()), int(df["idade"].max())))
+    
+    f_espera = st.slider("Tempo de espera (min)",
+                         int(df["tempo_espera_min"].min()),
+                         int(df["tempo_espera_min"].max()),
+                         (int(df["tempo_espera_min"].min()), int(df["tempo_espera_min"].max())))
+    
+    f_custo = st.slider("Custo (R$)", 
+                        float(df["custo"].min()), 
+                        float(df["custo"].max()),
+                        (float(df["custo"].min()), float(df["custo"].max())))
+    
+# ------------------------- 
+# Aplica filtro
+# ------------------------- 
 
-    terminologias = sorted(df["problema_diagnostico_terminologia"].dropna().unique())
-    sel_termo = st.multiselect(
-        "Terminologia (CID/CIAP)",
-        options=terminologias,
-        default=terminologias,
-    )
-
-# Aplicar filtros
+# Aplica os filtros construindo uma máscara booleana linha a linha.
 mask = (
-    (df["data_hora_atendimento_iso8601"].dt.date >= date_range[0])
-    & (df["data_hora_atendimento_iso8601"].dt.date <= date_range[1])
-    & (df["modalidade_assistencial"].isin(sel_modalidades))
-    & (df["carater_atendimento"].isin(sel_carater))
-    & (df["procedencia"].isin(sel_procedencia))
-    & (df["problema_diagnostico_terminologia"].isin(sel_termo))
+    (df["data"].between(pd.to_datetime(f_data[0]), pd.to_datetime(f_data[1])))
+    & (df["unidade"].isin(f_unidade))
+    & (df["especialidade"].isin(f_esp))
+    & (df["sexo"].isin(f_sexo))
+    & (df["idade"].between(f_idade[0], f_idade[1]))
+    & (df["tempo_espera_min"].between(f_espera[0], f_espera[1]))
+    & (df["custo"].between(f_custo[0], f_custo[1]))
 )
 
-filtered = df.loc[mask].copy()
+# DataFrame filtrado (cópia para evitar avisos do pandas)
+df_f = df[mask].copy()
 
-# =============================
+# ------------------------- 
 # KPIs
-# =============================
-st.subheader("📈 Indicadores Gerais")
-kpi_cols = st.columns(4)
-with kpi_cols[0]:
-    kpi("Atendimentos", f"{len(filtered):,}".replace(",", "."))
-with kpi_cols[1]:
-    kpi("Indivíduos únicos", filtered["identificador_nacional_individuo"].nunique())
-with kpi_cols[2]:
-    kpi("Estabelecimentos (CNES)", filtered["identificador_estabelecimento_saude_cnes"].nunique())
-with kpi_cols[3]:
-    kpi("Profissionais", filtered["profissional_identificador_cpf"].nunique())
+# ------------------------- 
 
-# =============================
-# Gráficos
-# =============================
-st.subheader("📊 Visualizações")
+c1, c2, c3, c4 = st.columns(4)
 
-# Séries temporais por dia
-if not filtered.empty:
-    ts = (
-        filtered.groupby("data", dropna=True)["identificador_nacional_individuo"]
-        .count()
-        .reset_index(name="atendimentos")
-        .sort_values("data")
+#len(): contagem de linhas sobre o filtrado
+#mean()/sum(): agregações sobre o filtrado
+
+c1.metric("Atendimentos", len(df_f))
+c2.metric("Tempo médio de espera (min)", f"{df_f['tempo_espera_min'].mean():.1f}")
+c3.metric("Satisfação média (1–5)", f"{df_f['satisfacao'].mean():.1f}")
+c4.metric("Custo total (R$)", f"{df_f['custo'].sum():.2f}")
+
+st.divider()
+
+# ------------------------- 
+# 4) Tabela / Gráfico / Download
+# ------------------------- 
+
+tab1, tab2, tab3 = st.tabs(["📋 Tabela", "📊 Gráfico", "⬇️ Exportar"])
+
+with tab1: # Tabela responsiva com o DF filtrado
+    st.dataframe(df_f, use_container_width=True, height=340)
+
+with tab2:
+
+    # Gráfico dinâmico:
+    st.subheader("Gráfico por dimensão")
+
+    # o usuário escolhe a dimensão (eixo X)
+    dim = st.selectbox("Dimensão", ["especialidade", "unidade", "sexo", "data"])
+
+    # e a métrica (agregação).
+    met = st.selectbox("Métrica", ["Atendimentos", "Tempo médio de espera", "Custo total", "Satisfação média"])
+
+    # groupby + size/mean/sum produzem o DataFrame 'agg' para plotar
+    if met == "Atendimentos":
+        agg = df_f.groupby(dim).size().reset_index(name="valor")
+    elif met == "Tempo médio de espera":
+        agg = df_f.groupby(dim)["tempo_espera_min"].mean().reset_index(name="valor")
+    elif met == "Custo total":
+        agg = df_f.groupby(dim)["custo"].sum().reset_index(name="valor")
+    else:
+        agg = df_f.groupby(dim)["satisfacao"].mean().reset_index(name="valor")
+
+    # se a dimensão for data, faz linha temporal; caso contrário, barras.
+    if dim == "data":
+        fig = px.line(agg.sort_values(dim), x=dim, y="valor", markers=True)
+    else:
+        fig = px.bar(agg.sort_values("valor", ascending=False), x=dim, y="valor")
+    fig.update_layout(height=420, margin=dict(l=10, r=10, t=30, b=10))
+    st.plotly_chart(fig, use_container_width=True)
+
+with tab3:
+
+    ## Exporta o DF filtrado como CSV para download.
+    st.download_button(
+        "Baixar CSV filtrado",
+        df_f.to_csv(index=False).encode("utf-8"),
+        file_name="dados_saude_filtrados.csv",
+        mime="text/csv",
     )
-    fig_ts = px.line(ts, x="data", y="atendimentos", markers=True, title="Atendimentos por dia")
-    st.plotly_chart(fig_ts, use_container_width=True)
 
-    col1, col2 = st.columns(2)
-
-    # Top diagnósticos
-    with col1:
-        top_diag = (
-            filtered.groupby(["problema_diagnostico_terminologia", "problema_diagnostico_codigo"])  
-            ["identificador_nacional_individuo"].count()
-            .reset_index(name="atendimentos")
-            .sort_values("atendimentos", ascending=False)
-            .head(15)
-        )
-        fig_diag = px.bar(
-            top_diag,
-            x="atendimentos",
-            y="problema_diagnostico_codigo",
-            color="problema_diagnostico_terminologia",
-            orientation="h",
-            title="Top diagnósticos",
-        )
-        st.plotly_chart(fig_diag, use_container_width=True)
-
-    # Atendimentos por modalidade e caráter
-    with col2:
-        moda = (
-            filtered.groupby(["modalidade_assistencial", "carater_atendimento"])  
-            ["identificador_nacional_individuo"].count()
-            .reset_index(name="atendimentos")
-        )
-        fig_mod = px.bar(
-            moda,
-            x="modalidade_assistencial",
-            y="atendimentos",
-            color="carater_atendimento",
-            barmode="group",
-            title="Atendimentos por modalidade e caráter",
-        )
-        st.plotly_chart(fig_mod, use_container_width=True)
-
-    # Distribuição horária por dia da semana (linha)
-    hourly = (
-        filtered.assign(
-            dia_semana=pd.Categorical(
-                filtered["dia_semana"],
-                categories=[
-                    "segunda-feira",
-                    "terça-feira",
-                    "quarta-feira",
-                    "quinta-feira",
-                    "sexta-feira",
-                    "sábado",
-                    "domingo",
-                ],
-                ordered=True,
-            )
-        )
-        .groupby(["dia_semana", "hora"])
-        ["identificador_nacional_individuo"]
-        .count()
-        .reset_index(name="atendimentos")
-        .sort_values(["dia_semana", "hora"])
-    )
-    fig_line = px.line(
-        hourly,
-        x="hora",
-        y="atendimentos",
-        color="dia_semana",
-        title="Distribuição horária por dia da semana",
-        labels={
-            "hora": "Hora do dia",
-            "atendimentos": "Atendimentos",
-            "dia_semana": "Dia da semana",
-        },
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-else:
-    st.warning("Nenhum registro atende aos filtros selecionados.")
-
-# =============================
-# Tabela e Download
-# =============================
-st.subheader("🧾 Amostra de dados filtrados")
-st.dataframe(filtered.head(200), use_container_width=True)
-
-st.download_button(
-    label="⬇️ Baixar dados filtrados (CSV)",
-    data=filtered.to_csv(index=False).encode("utf-8"),
-    file_name="rac_filtrado.csv",
-    mime="text/csv",
-)
-
-# =============================
-# Detalhes e Qualidade
-# =============================
-st.subheader("🧪 Validação & Qualidade")
-
-# Linhas inválidas por data não parseada
-invalid_dt = df[df["data_hora_atendimento_iso8601"].isna()]
-colq1, colq2, colq3 = st.columns(3)
-with colq1:
-    st.metric("Linhas com data inválida", len(invalid_dt))
-with colq2:
-    st.metric("Diagnósticos distintos", filtered[[
-        "problema_diagnostico_terminologia",
-        "problema_diagnostico_codigo"
-    ]].drop_duplicates().shape[0])
-with colq3:
-    st.metric("CNES distintos", filtered["identificador_estabelecimento_saude_cnes"].nunique())
-
-if len(invalid_dt) > 0:
-    with st.expander("Visualizar linhas com data inválida"):
-        st.dataframe(invalid_dt.head(200), use_container_width=True)
-
-# =============================
-# Rodapé
-# =============================
-st.markdown("""
----
-**Observações**
-- Este painel assume o **mínimo obrigatório** do RAC. Campos adicionais (ex.: procedimentos, sinais vitais, desfecho) podem ser incorporados.
-- Datas são interpretadas a partir de `data_hora_atendimento_iso8601` (ISO-8601). Se o CSV trouxer outro nome, utilize os **aliases** ou ajuste antes de importar.
-- Compatível com arquivos gerados pelo exemplo de dataframe desta conversa.
-""")
+# Rodapé com shapes (linhas, colunas) do DF original e filtrado.
+st.caption(f"Shape original: {df.shape} | filtrado: {df_f.shape}")
