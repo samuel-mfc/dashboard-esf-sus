@@ -100,7 +100,10 @@ def coerce_types(df: pd.DataFrame) -> pd.DataFrame:
         df["mes"] = df["data_hora_atendimento_iso8601"].dt.to_period("M").astype(str)
         df["semana"] = df["data_hora_atendimento_iso8601"].dt.strftime("%Y-%U")
         df["hora"] = df["data_hora_atendimento_iso8601"].dt.hour
-        df["dia_semana"] = df["data_hora_atendimento_iso8601"].dt.day_name(locale="pt_BR")
+        dias_pt = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"]
+        df["dia_semana"] = df["data_hora_atendimento_iso8601"].dt.dayofweek.map(
+            lambda i: dias_pt[i] if pd.notna(i) else None
+        )
     # Numéricos (onde fizer sentido)
     for c in ["identificador_estabelecimento_saude_cnes"]:
         if c in df.columns:
