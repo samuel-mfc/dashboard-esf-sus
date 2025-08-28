@@ -273,35 +273,42 @@ if not filtered.empty:
         )
         st.plotly_chart(fig_mod, use_container_width=True)
 
-    # Mapa de calor (dia da semana x hora)
-    heat = (
-        filtered.assign(dia_semana=pd.Categorical(
-            filtered["dia_semana"],
-            categories=[
-                "segunda-feira",
-                "terça-feira",
-                "quarta-feira",
-                "quinta-feira",
-                "sexta-feira",
-                "sábado",
-                "domingo",
-            ],
-            ordered=True,
-        ))
-        .groupby(["dia_semana", "hora"])  
-        ["identificador_nacional_individuo"].count()
+    # Distribuição horária por dia da semana (linha)
+    hourly = (
+        filtered.assign(
+            dia_semana=pd.Categorical(
+                filtered["dia_semana"],
+                categories=[
+                    "segunda-feira",
+                    "terça-feira",
+                    "quarta-feira",
+                    "quinta-feira",
+                    "sexta-feira",
+                    "sábado",
+                    "domingo",
+                ],
+                ordered=True,
+            )
+        )
+        .groupby(["dia_semana", "hora"])
+        ["identificador_nacional_individuo"]
+        .count()
         .reset_index(name="atendimentos")
+        .sort_values(["dia_semana", "hora"])
     )
-    fig_heat = px.density_heatmap(
-        heat,
+    fig_line = px.line(
+        hourly,
         x="hora",
-        y="dia_semana",
-        z="atendimentos",
-        nbinsx=24,
+        y="atendimentos",
+        color="dia_semana",
         title="Distribuição horária por dia da semana",
-        labels={"hora": "Hora do dia"},
+        labels={
+            "hora": "Hora do dia",
+            "atendimentos": "Atendimentos",
+            "dia_semana": "Dia da semana",
+        },
     )
-    st.plotly_chart(fig_heat, use_container_width=True)
+    st.plotly_chart(fig_line, use_container_width=True)
 
 else:
     st.warning("Nenhum registro atende aos filtros selecionados.")
