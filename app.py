@@ -117,7 +117,7 @@ por_unidade = (
 # ==========================
 # 4) Gráficos (Plotly)
 # ==========================
-fig_med = px.bar(
+fig_med = px.barh(
     por_medico,
     x=COL_MED,
     y="Atendimentos",
@@ -130,7 +130,7 @@ fig_med.update_layout(
     margin=dict(l=10, r=10, t=60, b=10)
 )
 
-fig_unid = px.bar(
+fig_unid = px.barh(
     por_unidade,
     x=COL_UNID,
     y="Atendimentos",
