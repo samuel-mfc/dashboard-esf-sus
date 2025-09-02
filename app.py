@@ -91,13 +91,17 @@ atendimentos_prof = (
     .rename(columns={'index': 'Profissional', 'nome_profissional': 'Atendimentos'})
 )
 
-fig_prof = px.bar(
-    atendimentos_prof,
-    x='Atendimentos',
-    y='Profissional',
-    orientation='h',
-    title='Atendimentos por Profissional'
-)
+if not atendimentos_prof.empty:
+    fig_prof = px.bar(
+        atendimentos_prof,
+        x='Atendimentos',
+        y='Profissional',
+        orientation='h',
+        title='Atendimentos por Profissional'
+    )
+    st.plotly_chart(fig_prof, use_container_width=True)
+else:
+    st.warning("Nenhum atendimento encontrado para os filtros selecionados (Profissional).")
 
 # ------------------------------
 # GRÁFICO 2: Atendimentos por Unidade
@@ -109,13 +113,17 @@ atendimentos_estab = (
     .rename(columns={'index': 'Unidade', 'nome_estab': 'Atendimentos'})
 )
 
-fig_estab = px.bar(
-    atendimentos_estab,
-    x='Atendimentos',
-    y='Unidade',
-    orientation='h',
-    title='Atendimentos por Unidade'
-)
+if not atendimentos_estab.empty:
+    fig_estab = px.bar(
+        atendimentos_estab,
+        x='Atendimentos',
+        y='Unidade',
+        orientation='h',
+        title='Atendimentos por Unidade'
+    )
+    st.plotly_chart(fig_estab, use_container_width=True)
+else:
+    st.warning("Nenhum atendimento encontrado para os filtros selecionados (Unidade).")
 
 # ------------------------------
 # GRÁFICO 3: Evolução Temporal
@@ -129,19 +137,15 @@ evolucao = (
     .reset_index(name='Atendimentos')
 )
 
-fig_tempo = px.line(
-    evolucao,
-    x='MesAno',
-    y='Atendimentos',
-    title='Evolução dos Atendimentos ao Longo do Tempo',
-    markers=True
-)
-
-fig_tempo.update_xaxes(type='category')
-
-# ------------------------------
-# LAYOUT DOS GRÁFICOS
-# ------------------------------
-st.plotly_chart(fig_prof, use_container_width=True)
-st.plotly_chart(fig_estab, use_container_width=True)
-st.plotly_chart(fig_tempo, use_container_width=True)
+if not evolucao.empty:
+    fig_tempo = px.line(
+        evolucao,
+        x='MesAno',
+        y='Atendimentos',
+        title='Evolução dos Atendimentos ao Longo do Tempo',
+        markers=True
+    )
+    fig_tempo.update_xaxes(type='category')
+    st.plotly_chart(fig_tempo, use_container_width=True)
+else:
+    st.warning("Nenhum atendimento encontrado no período selecionado.")
