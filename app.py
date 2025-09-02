@@ -18,9 +18,14 @@ st.markdown("Este painel permite a visualização dos atendimentos por profissio
 # ------------------------------
 @st.cache_data
 def carregar_dados():
-    # Substitua pelo caminho real do seu arquivo ou conecte a uma fonte de dados
-    df = pd.read_csv('atendimentos.csv', parse_dates=['data_atendimento'])
-    return df
+    # Substituir o carregamento fixo por um upload dinâmico
+uploaded_file = st.sidebar.file_uploader("📁 Faça upload do arquivo CSV", type=["csv"])
+
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file, parse_dates=['data_atendimento'])
+else:
+    st.warning("Por favor, envie o arquivo `atendimentos.csv` para continuar.")
+    st.stop()
 
 df = carregar_dados()
 
