@@ -1,36 +1,66 @@
-pip install streamlit plotly pandas
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# ----------------------
-# CARREGAR OS DADOS
-# ----------------------
+# ------------------------------
+# CONFIGURAÇÃO DA PÁGINA
+# ------------------------------
+st.set_page_config(
+    page_title="Dashboard de Atendimentos Médicos",
+    layout="wide"
+)
+
+st.title("📊 Dashboard de Atendimentos Médicos")
+st.markdown("Este painel permite a visualização dos atendimentos por profissional, por unidade e ao longo do tempo.")
+
+# ------------------------------
+# CARREGAR DADOS
+# ------------------------------
 @st.cache_data
 def carregar_dados():
-    df = pd.read_csv('seu_arquivo.csv', parse_dates=['data_atendimento'])  # ajuste o caminho
+    # Substitua pelo caminho real do seu arquivo ou conecte a uma fonte de dados
+    df = pd.read_csv('atendimentos.csv', parse_dates=['data_atendimento'])
     return df
 
 df = carregar_dados()
 
-# ----------------------
-# FILTROS
-# ----------------------
-st.sidebar.title("Filtros")
+# ------------------------------
+# SIDEBAR – FILTROS
+# ------------------------------
+st.sidebar.header("Filtros")
 
-anos = st.sidebar.multiselect("Selecione o(s) ano(s):", sorted(df['Ano'].unique()), default=sorted(df['Ano'].unique()))
-unidades = st.sidebar.multiselect("Selecione o(s) estabelecimento(s):", sorted(df['nome_estab'].unique()), default=sorted(df['nome_estab'].unique()))
-profissionais = st.sidebar.multiselect("Selecione o(s) profissional(is):", sorted(df['nome_profissional'].unique()), default=sorted(df['nome_profissional'].unique()))
+anos = st.sidebar.multiselect(
+    "Ano do Atendimento:",
+    options=sorted(df['Ano'].unique()),
+    default=sorted(df['Ano'].unique())
+)
 
-# Filtro por período (data_atendimento)
+unidades = st.sidebar.multiselect(
+    "Estabelecimento:",
+    options=sorted(df['nome_estab'].unique()),
+    default=sorted(df['nome_estab'].unique())
+)
+
+profissionais = st.sidebar.multiselect(
+    "Profissional:",
+    options=sorted(df['nome_profissional'].unique()),
+    default=sorted(df['nome_profissional'].unique())
+)
+
+# Filtro por intervalo de datas
 data_min = df['data_atendimento'].min()
 data_max = df['data_atendimento'].max()
-periodo = st.sidebar.date_input("Selecione o período:", [data_min, data_max])
 
-# ----------------------
-# APLICAR FILTROS
-# ----------------------
+periodo = st.sidebar.date_input(
+    "Período do Atendimento:",
+    value=(data_min, data_max),
+    min_value=data_min,
+    max_value=data_max
+)
+
+# ------------------------------
+# FILTRAR DATAFRAME
+# ------------------------------
 df_filtrado = df[
     (df['Ano'].isin(anos)) &
     (df['nome_estab'].isin(unidades)) &
@@ -39,56 +69,67 @@ df_filtrado = df[
     (df['data_atendimento'] <= pd.to_datetime(periodo[1]))
 ]
 
-# ----------------------
-# GRÁFICO 1: Atendimentos por Médico
-# ----------------------
-atendimentos_por_medico = df_filtrado['nome_profissional'].value_counts().reset_index()
-atendimentos_por_medico.columns = ['Profissional', 'Atendimentos']
+# ------------------------------
+# GRÁFICO 1: Atendimentos por Profissional
+# ------------------------------
+atendimentos_prof = (
+    df_filtrado['nome_profissional']
+    .value_counts()
+    .reset_index()
+    .rename(columns={'index': 'Profissional', 'nome_profissional': 'Atendimentos'})
+)
 
-fig1 = px.bar(
-    atendimentos_por_medico,
+fig_prof = px.bar(
+    atendimentos_prof,
     x='Atendimentos',
     y='Profissional',
     orientation='h',
     title='Atendimentos por Profissional'
 )
 
-# ----------------------
+# ------------------------------
 # GRÁFICO 2: Atendimentos por Unidade
-# ----------------------
-atendimentos_por_unidade = df_filtrado['nome_estab'].value_counts().reset_index()
-atendimentos_por_unidade.columns = ['Unidade', 'Atendimentos']
+# ------------------------------
+atendimentos_estab = (
+    df_filtrado['nome_estab']
+    .value_counts()
+    .reset_index()
+    .rename(columns={'index': 'Unidade', 'nome_estab': 'Atendimentos'})
+)
 
-fig2 = px.bar(
-    atendimentos_por_unidade,
+fig_estab = px.bar(
+    atendimentos_estab,
     x='Atendimentos',
     y='Unidade',
     orientation='h',
     title='Atendimentos por Unidade'
 )
 
-# ----------------------
-# GRÁFICO 3: Evolução Temporal dos Atendimentos
-# ----------------------
-df_temporal = df_filtrado.copy()
-df_temporal['MesAno'] = df_temporal['data_atendimento'].dt.to_period('M').astype(str)
+# ------------------------------
+# GRÁFICO 3: Evolução Temporal
+# ------------------------------
+df_temp = df_filtrado.copy()
+df_temp['MesAno'] = df_temp['data_atendimento'].dt.to_period('M').astype(str)
 
-atendimentos_tempo = df_temporal.groupby('MesAno').size().reset_index(name='Atendimentos')
+evolucao = (
+    df_temp.groupby('MesAno')
+    .size()
+    .reset_index(name='Atendimentos')
+)
 
-fig3 = px.line(
-    atendimentos_tempo,
+fig_tempo = px.line(
+    evolucao,
     x='MesAno',
     y='Atendimentos',
-    markers=True,
-    title='Evolução dos Atendimentos ao Longo do Tempo'
+    title='Evolução dos Atendimentos ao Longo do Tempo',
+    markers=True
 )
-fig3.update_xaxes(type='category')
 
-# ----------------------
-# LAYOUT NO STREAMLIT
-# ----------------------
-st.title("📊 Dashboard de Atendimentos Médicos")
+fig_tempo.update_xaxes(type='category')
 
-st.plotly_chart(fig1, use_container_width=True)
-st.plotly_chart(fig2, use_container_width=True)
-st.plotly_chart(fig3, use_container_width=True)
+# ------------------------------
+# LAYOUT DOS GRÁFICOS
+# ------------------------------
+st.plotly_chart(fig_prof, use_container_width=True)
+st.plotly_chart(fig_estab, use_container_width=True)
+st.plotly_chart(fig_tempo, use_container_width=True)
