@@ -122,7 +122,7 @@ fig_med = px.bar(
     x="Atendimentos",
     y=COL_MED,
     orientation="h",
-    title="Atendimentos por Profissional" (Top {min(top_n, len(por_medico))}) — n={len(dff)}"
+    title=f"Atendimentos por Profissional (Top {min(top_n, len(por_medico))}) — n={len(dff)}"
 )
 fig_med.update_layout(
     xaxis_title="Atendimentos",
@@ -136,7 +136,7 @@ fig_unid = px.bar(
     x="Atendimentos",
     y=COL_UNID,
     orientation="h",
-    title="Atendimentos por Unidade" (Top {min(top_n, len(por_unidade))}) — n={len(dff)}"
+    title=f"Atendimentos por Unidade (Top {min(top_n, len(por_unidade))}) — n={len(dff)}"
 )
 fig_unid.update_layout(
     xaxis_title="Atendimentos",
