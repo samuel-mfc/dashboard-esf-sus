@@ -17,17 +17,24 @@ st.markdown("Este painel permite a visualização dos atendimentos por profissio
 # CARREGAR DADOS
 # ------------------------------
 @st.cache_data
-def carregar_dados():
-    # Substituir o carregamento fixo por um upload dinâmico
+def carregar_dados(uploaded_file):
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file, parse_dates=['data_atendimento'])
+        return df
+    else:
+        return None
+
 uploaded_file = st.sidebar.file_uploader("📁 Faça upload do arquivo CSV", type=["csv"])
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, parse_dates=['data_atendimento'])
-else:
+df = carregar_dados(uploaded_file)
+
+if df is None:
     st.warning("Por favor, envie o arquivo `atendimentos.csv` para continuar.")
     st.stop()
 
-df = carregar_dados()
+# Garante que colunas necessárias existam
+if 'Ano' not in df.columns:
+    df['Ano'] = df['data_atendimento'].dt.year
 
 # ------------------------------
 # SIDEBAR – FILTROS
