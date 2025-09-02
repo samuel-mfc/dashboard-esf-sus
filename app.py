@@ -117,28 +117,30 @@ por_unidade = (
 # ==========================
 # 4) Gráficos (Plotly)
 # ==========================
-fig_med = px.barh(
+fig_med = px.bar(
     por_medico,
-    x=COL_MED,
-    y="Atendimentos",
-    title=f"Atendimentos por Profissional (Top {min(top_n, len(por_medico))}) — n={len(dff)}"
+    x="Atendimentos",
+    y=COL_MED,
+    orientation="h",
+    title="Atendimentos por Profissional" (Top {min(top_n, len(por_medico))}) — n={len(dff)}"
 )
 fig_med.update_layout(
-    xaxis_title="Profissional",
-    yaxis_title="Atendimentos",
+    xaxis_title="Atendimentos",
+    yaxis_title="Profissional",
     hovermode="x unified",
     margin=dict(l=10, r=10, t=60, b=10)
 )
 
-fig_unid = px.barh(
+fig_unid = px.bar(
     por_unidade,
-    x=COL_UNID,
-    y="Atendimentos",
-    title=f"Atendimentos por Unidade (Top {min(top_n, len(por_unidade))}) — n={len(dff)}"
+    x="Atendimentos",
+    y=COL_UNID,
+    orientation="h",
+    title="Atendimentos por Unidade" (Top {min(top_n, len(por_unidade))}) — n={len(dff)}"
 )
 fig_unid.update_layout(
-    xaxis_title="Unidade",
-    yaxis_title="Atendimentos",
+    xaxis_title="Atendimentos",
+    yaxis_title="Unidade",
     hovermode="x unified",
     margin=dict(l=10, r=10, t=60, b=10)
 )
