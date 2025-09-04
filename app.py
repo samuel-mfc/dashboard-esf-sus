@@ -95,15 +95,15 @@ def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) ->
 
     fig.update_layout(
         title=(
-        "Profissionais distintos por Equipe (NO_REFERENCIA)<br>"
-        f"<sup>Estabelecimento: {nome_str} — CNES: {cnes_selecionado}</sup>"
+            "Profissionais distintos por Equipe (NO_REFERENCIA)<br>"
+            f"<sup>Estabelecimento: {nome_str} — CNES: {cnes_selecionado}</sup>"
         ),
         xaxis_title="Quantidade de Profissionais Distintos",
         yaxis_title="Equipe (NO_REFERENCIA)",
         height=max(420, 20 * len(dados)),
         margin=dict(l=220, r=40, t=100, b=40),
-     )
-     return fig
+    )
+    return fig
 
 
 def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: int) -> go.Figure:
