@@ -61,6 +61,50 @@ def safe_nunique(s: pd.Series) -> int:
     except Exception:
         return 0
 
+def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) -> go.Figure:
+    if not {"CO_CNES", "NO_REFERENCIA", "CO_PROFISSIONAL_SUS"}.issubset(df.columns):
+        fig = go.Figure()
+        fig.update_layout(title="Colunas requeridas ausentes para este gráfico.")
+        return fig
+    
+    
+    dados = (
+        df[df["CO_CNES"] == cnes_selecionado]
+        .groupby("NO_REFERENCIA")["CO_PROFISSIONAL_SUS"]
+        .nunique()
+        .reset_index(name="qtd_profissionais")
+        .sort_values("qtd_profissionais", ascending=True)
+     )
+
+
+    nome = (df.loc[df["CO_CNES"] == cnes_selecionado, "NO_FANTASIA"].dropna().unique())
+    nome_str = nome[0] if len(nome) else str(cnes_selecionado)
+
+
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=dados["qtd_profissionais"],
+                y=dados["NO_REFERENCIA"],
+                orientation="h",
+                hovertemplate="<b>%{y}</b><br>Profissionais distintos: %{x}<extra></extra>",
+            )
+        ]
+    )
+
+
+    fig.update_layout(
+        title=(
+        "Profissionais distintos por Equipe (NO_REFERENCIA)<br>"
+        f"<sup>Estabelecimento: {nome_str} — CNES: {cnes_selecionado}</sup>"
+        ),
+        xaxis_title="Quantidade de Profissionais Distintos",
+        yaxis_title="Equipe (NO_REFERENCIA)",
+        height=max(420, 20 * len(dados)),
+        margin=dict(l=220, r=40, t=100, b=40),
+     )
+     return fig
+
 
 def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: int) -> go.Figure:
     if not {"CO_CNES", "DS_ATIVIDADE_PROFISSIONAL", "CO_PROFISSIONAL_SUS"}.issubset(df.columns):
