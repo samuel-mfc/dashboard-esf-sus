@@ -98,8 +98,8 @@ def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) ->
             "Profissionais distintos por Equipe (NO_REFERENCIA)<br>"
             f"<sup>Estabelecimento: {nome_str} — CNES: {cnes_selecionado}</sup>"
         ),
-        xaxis_title="Quantidade de Profissionais Distintos",
-        yaxis_title="Equipe (NO_REFERENCIA)",
+        xaxis_title="Quantidade de Profissionais",
+        yaxis_title="Equipe",
         height=max(420, 20 * len(dados)),
         margin=dict(l=220, r=40, t=100, b=40),
     )
@@ -188,9 +188,9 @@ if ST_AVAILABLE:
         st.subheader("Amostra dos dados")
         st.dataframe(df.head(30), use_container_width=True)
 
-    elif pagina == "Equipes por Estabelecimento":
-        st.title("👩‍⚕️ Equipes por Estabelecimento")
-        st.caption("Gráfico interativo de profissionais distintos por equipe dentro de cada estabelecimento.")
+    elif pagina == "Profissionais por Equipe":
+        st.title("👩‍⚕️ Profissionais por Equipe")
+        st.caption("Gráfico interativo de profissionais por equipe dentro de cada estabelecimento.")
 
         faltantes = {"CO_CNES", "NO_FANTASIA"} - set(df.columns)
         if faltantes:
@@ -204,7 +204,7 @@ if ST_AVAILABLE:
             .set_index("CO_CNES")["NO_FANTASIA"].to_dict()
         )
         opcoes = sorted([(nome, cnes) for cnes, nome in mapa_nome.items()], key=lambda x: x[0].lower())
-        nome_sel = st.selectbox("Selecione o estabelecimento (NO_FANTASIA)", options=[n for n, _ in opcoes])
+        nome_sel = st.selectbox("Selecione o estabelecimento", options=[n for n, _ in opcoes])
         cnes_sel = next(c for n, c in opcoes if n == nome_sel)
 
         fig = plot_equipes_por_estabelecimento(df, cnes_sel)
