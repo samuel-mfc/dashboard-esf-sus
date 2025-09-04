@@ -103,7 +103,7 @@ def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) ->
         height=max(420, 20 * len(dados)),
         margin=dict(l=220, r=40, t=100, b=40),
      )
-     return fig
+ return fig
 
 
 def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: int) -> go.Figure:
