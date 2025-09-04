@@ -210,14 +210,6 @@ if ST_AVAILABLE:
         fig = plot_equipes_por_estabelecimento(df, cnes_sel)
         st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
-        st.markdown("### Detalhe (tabela)")
-        detalhe = (
-            df[df["CO_CNES"] == cnes_sel]
-            .groupby(["NO_REFERENCIA"])["CO_PROFISSIONAL_SUS"].nunique()
-            .reset_index(name="qtd_profissionais")
-            .sort_values("qtd_profissionais", ascending=False)
-        )
-        st.dataframe(detalhe, use_container_width=True)
 
     elif pagina == "Categorias Profissionais":
         st.title("🧑‍⚕️ Categorias Profissionais por Estabelecimento")
