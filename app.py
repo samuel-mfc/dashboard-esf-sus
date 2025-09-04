@@ -95,7 +95,7 @@ def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) ->
 
     fig.update_layout(
         title=(
-            "Profissionais distintos por Equipe (NO_REFERENCIA)<br>"
+            "Profissionais por Equipe <br>"
             f"<sup>Estabelecimento: {nome_str} — CNES: {cnes_selecionado}</sup>"
         ),
         xaxis_title="Quantidade de Profissionais",
@@ -168,7 +168,7 @@ if ST_AVAILABLE:
 
     pagina = st.sidebar.radio(
         "Navegação",
-        ["Visão Geral", "Equipes por Estabelecimento", "Categorias Profissionais"],
+        ["Visão Geral", "Profissionais por Equipe", "Categorias Profissionais"],
         index=0,
     )
 
