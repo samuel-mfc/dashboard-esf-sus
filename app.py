@@ -207,9 +207,6 @@ if ST_AVAILABLE:
         nome_sel = st.selectbox("Selecione o estabelecimento (NO_FANTASIA)", options=[n for n, _ in opcoes])
         cnes_sel = next(c for n, c in opcoes if n == nome_sel)
 
-        st.write("DEBUG seleção CNES:", cnes_sel)
-        st.write("DEBUG registros filtrados:", df[df["CO_CNES"] == cnes_sel].head())
-
         fig = plot_equipes_por_estabelecimento(df, cnes_sel)
         st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
