@@ -106,22 +106,24 @@ def plot_equipes_por_estabelecimento(df: pd.DataFrame, cnes_selecionado: int) ->
     return fig
 
 
-def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: int) -> go.Figure:
+def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: list[int]) -> go.Figure:
     if not {"CO_CNES", "DS_ATIVIDADE_PROFISSIONAL", "CO_PROFISSIONAL_SUS"}.issubset(df.columns):
         fig = go.Figure()
         fig.update_layout(title="Colunas necessárias ausentes.")
         return fig
 
+    df_filtrado = df[df["CO_CNES"].isin(cnes_selecionado)]
+
     grupo = (
-        df[df["CO_CNES"] == cnes_selecionado]
+        df_filtrado
         .groupby("DS_ATIVIDADE_PROFISSIONAL")["CO_PROFISSIONAL_SUS"]
         .nunique()
         .sort_values(ascending=True)
         .reset_index(name="qtd_profissionais")
     )
 
-    nome = df.loc[df["CO_CNES"] == cnes_selecionado, "NO_FANTASIA"].dropna().unique()
-    nome_str = nome[0] if len(nome) else str(cnes_selecionado)
+    nomes = df_filtrado["NO_FANTASIA"].dropna().unique()
+    nomes_str = ", ".join(nomes) if len(nomes) else ", ".join(map(str, cnes_selecionado))
 
     fig = go.Figure(
         data=[
@@ -136,7 +138,7 @@ def plot_profissionais_por_categoria(df: pd.DataFrame, cnes_selecionado: int) ->
 
     fig.update_layout(
         title=(
-            f"Profissionais por Categoria Profissional<br><sup>{nome_str} — CNES {cnes_selecionado}</sup>"
+            f"Profissionais por Categoria Profissional<br><sup>{nomes_str}</sup>"
         ),
         xaxis_title="Quantidade de Profissionais",
         yaxis_title="Categoria Profissional",
@@ -211,22 +213,35 @@ if ST_AVAILABLE:
         st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
 
+    # Página: Categorias Profissionais
     elif pagina == "Categorias Profissionais":
         st.title("🧑‍⚕️ Categorias Profissionais por Estabelecimento")
-
+    
         faltantes = {"CO_CNES", "NO_FANTASIA"} - set(df.columns)
         if faltantes:
             st.error(f"Colunas obrigatórias ausentes nesta página:\n- " + "\n- ".join(faltantes))
             st.stop()
-
+    
         mapa_nome = (
             df[["CO_CNES", "NO_FANTASIA"]]
-            .dropna().drop_duplicates("CO_CNES")
-            .set_index("CO_CNES")["NO_FANTASIA"].to_dict()
+            .dropna()
+            .drop_duplicates("CO_CNES")
+            .set_index("CO_CNES")["NO_FANTASIA"]
+            .to_dict()
         )
+    
         opcoes = sorted([(nome, cnes) for cnes, nome in mapa_nome.items()], key=lambda x: x[0].lower())
-        nome_sel = st.selectbox("Selecione o estabelecimento", [n for n, _ in opcoes])
-        cnes_sel = next(c for n, c in opcoes if n == nome_sel)
-
-        fig = plot_profissionais_por_categoria(df, cnes_sel)
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+        nomes_disponiveis = [nome for nome, _ in opcoes]
+    
+        selecionados = st.multiselect(
+            "Selecione um ou mais estabelecimentos",
+            options=nomes_disponiveis,
+            default=nomes_disponiveis  # <- já marca todos
+        )
+    
+        if not selecionados:
+            st.warning("Selecione ao menos um estabelecimento para visualizar o gráfico.")
+        else:
+            cnes_selecionados = [cnes for nome, cnes in opcoes if nome in selecionados]
+            fig = plot_profissionais_por_categoria(df, cnes_selecionados)
+            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
