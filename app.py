@@ -18,14 +18,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
 
-# =============================
-# TENTATIVA DE IMPORT DO STREAMLIT
-# =============================
 try:
     import streamlit as st  # type: ignore
     ST_AVAILABLE = True
-
-    # Alias do decorator de cache para permitir reuso em funções
     cache_data = st.cache_data
 except ModuleNotFoundError:
     ST_AVAILABLE = False
@@ -122,6 +117,8 @@ if ST_AVAILABLE:
         st.stop()
 
     st.success("Dados carregados com sucesso!")
+    st.write("Colunas carregadas:", df.columns.tolist())
+    st.write("Shape do dataframe:", df.shape)
 
     pagina = st.sidebar.radio(
         "Navegação",
@@ -129,21 +126,74 @@ if ST_AVAILABLE:
         index=0,
     )
 
-    if pagina == "Categorias Profissionais":
+    if pagina == "Visão Geral":
+        st.title("📊 Dashboard APS — Visão Geral")
+        st.caption("Resumo inicial dos dados carregados.")
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("Profissionais distintos", safe_nunique(df.get("CO_PROFISSIONAL_SUS", pd.Series(dtype=object))))
+        with c2:
+            st.metric("Equipes distintas (SEQ_EQUIPE)", safe_nunique(df.get("SEQ_EQUIPE", pd.Series(dtype=object))))
+        with c3:
+            st.metric("Estabelecimentos (CO_CNES)", safe_nunique(df.get("CO_CNES", pd.Series(dtype=object))))
+        with c4:
+            st.metric("Tipos de Equipe (DS_EQUIPE)", safe_nunique(df.get("DS_EQUIPE", pd.Series(dtype=object))))
+
+        st.markdown("---")
+        st.subheader("Amostra dos dados")
+        st.dataframe(df.head(30), use_container_width=True)
+
+    elif pagina == "Equipes por Estabelecimento":
+        st.title("👩‍⚕️ Equipes por Estabelecimento")
+        st.caption("Gráfico interativo de profissionais distintos por equipe dentro de cada estabelecimento.")
+
+        faltantes = {"CO_CNES", "NO_FANTASIA"} - set(df.columns)
+        if faltantes:
+            st.error(f"Colunas obrigatórias ausentes nesta página:\n- " + "\n- ".join(faltantes))
+            st.stop()
+
+        mapa_nome = (
+            df[["CO_CNES", "NO_FANTASIA"]]
+            .dropna(subset=["CO_CNES", "NO_FANTASIA"])
+            .drop_duplicates("CO_CNES")
+            .set_index("CO_CNES")["NO_FANTASIA"].to_dict()
+        )
+        opcoes = sorted([(nome, cnes) for cnes, nome in mapa_nome.items()], key=lambda x: x[0].lower())
+        nome_sel = st.selectbox("Selecione o estabelecimento (NO_FANTASIA)", options=[n for n, _ in opcoes])
+        cnes_sel = next(c for n, c in opcoes if n == nome_sel)
+
+        st.write("DEBUG seleção CNES:", cnes_sel)
+        st.write("DEBUG registros filtrados:", df[df["CO_CNES"] == cnes_sel].head())
+
+        fig = plot_equipes_por_estabelecimento(df, cnes_sel)
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+
+        st.markdown("### Detalhe (tabela)")
+        detalhe = (
+            df[df["CO_CNES"] == cnes_sel]
+            .groupby(["NO_REFERENCIA"])["CO_PROFISSIONAL_SUS"].nunique()
+            .reset_index(name="qtd_profissionais")
+            .sort_values("qtd_profissionais", ascending=False)
+        )
+        st.dataframe(detalhe, use_container_width=True)
+
+    elif pagina == "Categorias Profissionais":
         st.title("🧑‍⚕️ Categorias Profissionais por Estabelecimento")
 
-        if not {"CO_CNES", "NO_FANTASIA"}.issubset(df.columns):
-            st.warning("Colunas necessárias ausentes: CO_CNES, NO_FANTASIA.")
-        else:
-            mapa_nome = (
-                df[["CO_CNES", "NO_FANTASIA"]]
-                .dropna().drop_duplicates("CO_CNES")
-                .set_index("CO_CNES")["NO_FANTASIA"].to_dict()
-            )
+        faltantes = {"CO_CNES", "NO_FANTASIA"} - set(df.columns)
+        if faltantes:
+            st.error(f"Colunas obrigatórias ausentes nesta página:\n- " + "\n- ".join(faltantes))
+            st.stop()
 
-            opcoes = sorted([(nome, cnes) for cnes, nome in mapa_nome.items()], key=lambda x: x[0].lower())
-            nome_sel = st.selectbox("Selecione o estabelecimento", [n for n, _ in opcoes])
-            cnes_sel = next(c for n, c in opcoes if n == nome_sel)
+        mapa_nome = (
+            df[["CO_CNES", "NO_FANTASIA"]]
+            .dropna().drop_duplicates("CO_CNES")
+            .set_index("CO_CNES")["NO_FANTASIA"].to_dict()
+        )
+        opcoes = sorted([(nome, cnes) for cnes, nome in mapa_nome.items()], key=lambda x: x[0].lower())
+        nome_sel = st.selectbox("Selecione o estabelecimento", [n for n, _ in opcoes])
+        cnes_sel = next(c for n, c in opcoes if n == nome_sel)
 
-            fig = plot_profissionais_por_categoria(df, cnes_sel)
-            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+        fig = plot_profissionais_por_categoria(df, cnes_sel)
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
