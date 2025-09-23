@@ -47,55 +47,23 @@ if uploaded_file:
                 q1=lambda x: x.quantile(0.25),
                 q3=lambda x: x.quantile(0.75)
             ).reset_index()
-            
-            # 📈 Gráfico ajustado
+
+            # 📈 Gráfico
             fig = go.Figure()
-            
-            # 1️⃣ 3º Quartil (superior)
-            fig.add_trace(go.Scatter(
-                x=agrupado['MesAno'],
-                y=agrupado['q3'],
-                mode='lines',
-                name='3º Quartil',
-                line=dict(dash='dot', color='lightblue'),
-                fill='rgba(173,216,230,0.3)'
-            ))
-            
-            # 2️⃣ Mediana
-            fig.add_trace(go.Scatter(
-                x=agrupado['MesAno'],
-                y=agrupado['mediana'],
-                mode='lines+markers',
-                name='Mediana',
-                line=dict(color='blue')
-            ))
-            
-            # 3️⃣ 1º Quartil (inferior)
-            fig.add_trace(go.Scatter(
-                x=agrupado['MesAno'],
-                y=agrupado['q1'],
-                mode='lines',
-                name='1º Quartil',
-                line=dict(dash='dot', color='lightblue'),
-                fill='tonexty',
-                fillcolor='rgba(173,216,230,0.3)'
-            ))
-            
-            # 🔧 Garantir exibição de todos os meses no eixo X
-            meses_ordenados = sorted(agrupado['MesAno'].unique())
-            
+            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['mediana'],
+                                     mode='lines+markers', name='Mediana', line=dict(color='blue')))
+            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q1'],
+                                     mode='lines', name='1º Quartil', line=dict(dash='dot', color='lightblue')))
+            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q3'],
+                                     mode='lines', name='3º Quartil', line=dict(dash='dot', color='lightblue'),
+                                     fill='tonexty', fillcolor='rgba(173,216,230,0.3)'))  # faixa entre q1 e q3
+
             fig.update_layout(
                 title="Tempo de Espera (dias) por Mês",
                 xaxis_title="Mês/Ano",
                 yaxis_title="Tempo de Espera (dias)",
                 hovermode="x unified",
-                template="plotly_white",
-                xaxis=dict(
-                    type='category',
-                    categoryorder='array',
-                    categoryarray=meses_ordenados,
-                    tickangle=0  # ou -45 se quiser rotacionar os meses
-                )
+                template="plotly_white"
             )
-            
+
             st.plotly_chart(fig, use_container_width=True)
