@@ -1,30 +1,45 @@
-# Dashboard de Regulação Assistencial — MIRA (e-SUS Regulação)
+# 📊 Evolução do Tempo de Espera por Mês – Streamlit App
 
-Protótipo em **Streamlit** para análise de solicitações de regulação assistencial,
-baseado no **Modelo de Informação da Regulação Assistencial (MIRA)** proposto pelo
-Ministério da Saúde.
+Este aplicativo interativo desenvolvido com [Streamlit](https://streamlit.io/) permite visualizar a **evolução do tempo de espera para agendamentos médicos ao longo dos meses**, com a possibilidade de **filtrar por especialidade e por unidade solicitante**.
 
-## Funcionalidades
-- 📥 Upload de base de dados (CSV/Parquet) ou uso de dados simulados
-- 📊 KPIs: fila atual, agendadas, realizadas, canceladas/devolvidas, tempo mediano e P90 até agendar, taxa de cancelamento
-- 📈 Gráficos: backlog por mês, funil de solicitações, boxplot de tempo de espera por prioridade, ranking das maiores filas por especialidade
-- 📋 Tabelas: métricas por prioridade e amostra de solicitações detalhadas
+O gráfico mostra:
+- **Mediana do tempo de espera**
+- **1º e 3º quartis**
+- **Faixa interquartil sombreada**
+- Todos os meses exibidos no eixo X
+- Valores arredondados e apresentados em número inteiro
 
-## Colunas mínimas esperadas
-- `id_solicitacao`
-- `data_solicitacao`
-- `especialidade`
-- `prioridade` (ex.: P1, P2, P3, P4)
-- `situacao` (Aguardando, Agendado, Realizado, Cancelado, Devolvido)
-- `data_agendamento`
-- `data_realizacao`
-- `unidade_origem`
-- `servico_destino`
+---
 
-### Opcionais
-- `procedimento`, `equipe_origem`, `central_regulacao`, `municipio_destino`, `canal`, `cns_paciente`
+## ✅ Funcionalidades
 
-## Como rodar localmente
+- Upload de arquivo `.csv` ou `.xlsx`
+- Filtros múltiplos por:
+  - Especialidade
+  - Unidade Solicitante
+- Gráfico de linha com:
+  - Faixas entre quartis
+  - Hover unificado com ordenação semântica
+- Responsivo e amigável para uso local ou na web
+
+---
+
+## 📁 Estrutura dos dados esperados
+
+O arquivo de entrada deve conter as seguintes colunas:
+
+| Coluna                | Tipo           | Exemplo              |
+|-----------------------|----------------|-----------------------|
+| `data_solicitacao`    | Data (`YYYY-MM-DD`) | `2024-01-15`    |
+| `tempo_espera_dias`   | Numérico (int ou float) | `12`        |
+| `Especialidade`       | Texto          | `Cardiologia`         |
+| `Unidade Solicitante` | Texto          | `UBS Central`         |
+
+---
+
+## 🚀 Como executar localmente
+
+1. **Clone o repositório:**
 ```bash
-pip install -r requirements.txt
-streamlit run app_regulacao.py
+git clone https://github.com/seu-usuario/seu-repositorio.git
+cd seu-repositorio
