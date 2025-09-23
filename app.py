@@ -104,6 +104,7 @@ if uploaded_file:
                     categoryorder='array',
                     categoryarray=meses_ordenados,
                     tickangle=0  # você pode mudar para -45 se quiser inclinar os meses
-                ) 
-            
+                )
+            )
+
         st.plotly_chart(fig, use_container_width=True)
