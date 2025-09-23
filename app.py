@@ -50,15 +50,46 @@ if uploaded_file:
 
             # 📈 Gráfico
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q1'],
-                                     mode='lines', name='1º Quartil', line=dict(dash='dot', color='lightblue')))           
-            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['mediana'],
-                                     mode='lines+markers', name='Mediana', line=dict(color='blue')))
-                                    fill='tonexty', fillcolor='rgba(173,216,230,0.3)')) # faixa entre mediana e q1
-            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q3'],
-                                     mode='lines', name='3º Quartil', line=dict(dash='dot', color='lightblue'),
-                                     fill='tonexty', fillcolor='rgba(173,216,230,0.3)'))  # faixa entre q1 e q3 
-
+            
+            # 1º Quartil
+            fig.add_trace(go.Scatter(
+                x=agrupado['MesAno'],
+                y=agrupado['q1'],
+                mode='lines',
+                name='1º Quartil',
+                line=dict(dash='dot', color='lightblue'),
+            ))
+            
+            # Faixa entre 1º e 3º Quartil (área preenchida)
+            fig.add_trace(go.Scatter(
+                x=pd.concat([agrupado['MesAno'], agrupado['MesAno'][::-1]]),
+                y=pd.concat([agrupado['q1'], agrupado['q3'][::-1]]),
+                fill='toself',
+                fillcolor='rgba(173,216,230,0.3)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo="skip",
+                showlegend=True,
+                name='Faixa entre Quartis'
+            ))
+            
+            # Mediana
+            fig.add_trace(go.Scatter(
+                x=agrupado['MesAno'],
+                y=agrupado['mediana'],
+                mode='lines+markers',
+                name='Mediana',
+                line=dict(color='blue')
+            ))
+            
+            # 3º Quartil
+            fig.add_trace(go.Scatter(
+                x=agrupado['MesAno'],
+                y=agrupado['q3'],
+                mode='lines',
+                name='3º Quartil',
+                line=dict(dash='dot', color='lightblue'),
+            ))
+            
             fig.update_layout(
                 title="Tempo de Espera (dias) por Mês",
                 xaxis_title="Mês/Ano",
@@ -66,5 +97,5 @@ if uploaded_file:
                 hovermode="x unified",
                 template="plotly_white"
             )
-
+            
             st.plotly_chart(fig, use_container_width=True)
