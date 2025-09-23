@@ -58,7 +58,7 @@ if uploaded_file:
                 mode='lines',
                 name='3º Quartil',
                 line=dict(dash='dot', color='lightblue'),
-                fill=None
+                fill='rgba(173,216,230,0.3)'
             ))
             
             # 2️⃣ Mediana
