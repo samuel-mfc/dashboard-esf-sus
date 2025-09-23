@@ -90,12 +90,20 @@ if uploaded_file:
                 line=dict(dash='dot', color='rgba(144, 238, 144, 0.3)'),
             ))
             
+            # 🔧 Garantir que todos os meses apareçam no eixo X
+            meses_ordenados = sorted(agrupado['MesAno'].unique())
+            
             fig.update_layout(
                 title="Tempo de Espera (dias) por Mês",
                 xaxis_title="Mês/Ano",
                 yaxis_title="Tempo de Espera (dias)",
                 hovermode="x unified",
-                template="plotly_white"
-            ) 
+                template="plotly_white",
+                xaxis=dict(
+                    type='category',
+                    categoryorder='array',
+                    categoryarray=meses_ordenados,
+                    tickangle=0  # você pode mudar para -45 se quiser inclinar os meses
+                ) 
             
         st.plotly_chart(fig, use_container_width=True)
