@@ -68,7 +68,7 @@ if uploaded_file:
                 fillcolor='rgba(173,216,230,0.3)',
                 line=dict(color='rgba(255,255,255,0)'),
                 hoverinfo="skip",
-                showlegend=True,
+                showlegend=False,
                 name='Faixa entre Quartis'
             ))
             
