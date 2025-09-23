@@ -41,12 +41,12 @@ if uploaded_file:
         if df_filtrado.empty:
             st.warning("Nenhum dado encontrado para os filtros selecionados.")
         else:
-            # 📊 Agregação
+            # 📊 Agregação com arredondamento para inteiro
             agrupado = df_filtrado.groupby('MesAno')['tempo_espera_dias'].agg(
                 mediana='median',
                 q1=lambda x: x.quantile(0.25),
                 q3=lambda x: x.quantile(0.75)
-            ).reset_index()
+            ).round().astype(int).reset_index()
 
             # 📈 Gráfico
             fig = go.Figure()
