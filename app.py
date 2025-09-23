@@ -57,7 +57,7 @@ if uploaded_file:
                 y=agrupado['q3'],
                 mode='lines',
                 name='3º Quartil',
-                line=dict(dash='dot', color='lightred'),
+                line=dict(dash='dot', color='lightblue'),
             ))
             
             # Faixa entre 1º e 3º Quartil (área preenchida)
@@ -87,7 +87,7 @@ if uploaded_file:
                 y=agrupado['q1'],
                 mode='lines',
                 name='1º Quartil',
-                line=dict(dash='dot', color='lightgreen'),
+                line=dict(dash='dot', color='lightblue'),
             ))
             
             fig.update_layout(
