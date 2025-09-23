@@ -96,4 +96,6 @@ if uploaded_file:
                 yaxis_title="Tempo de Espera (dias)",
                 hovermode="x unified",
                 template="plotly_white"
-            )
+            ) 
+            
+        st.plotly_chart(fig, use_container_width=True)
