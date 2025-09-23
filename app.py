@@ -54,7 +54,7 @@ if uploaded_file:
                                      mode='lines', name='1º Quartil', line=dict(dash='dot', color='lightblue')))           
             fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['mediana'],
                                      mode='lines+markers', name='Mediana', line=dict(color='blue')))
-                                     fill='tonexty', fillcolor='rgba(173,216,230,0.3)')) # faixa entre mediana e q1
+                                    fill='tonexty', fillcolor='rgba(173,216,230,0.3)')) # faixa entre mediana e q1
             fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q3'],
                                      mode='lines', name='3º Quartil', line=dict(dash='dot', color='lightblue'),
                                      fill='tonexty', fillcolor='rgba(173,216,230,0.3)'))  # faixa entre q1 e q3 
