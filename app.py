@@ -50,13 +50,13 @@ if uploaded_file:
 
             # 📈 Gráfico
             fig = go.Figure()
-            
-            # 1º Quartil
+
+            # 3º Quartil
             fig.add_trace(go.Scatter(
                 x=agrupado['MesAno'],
-                y=agrupado['q1'],
+                y=agrupado['q3'],
                 mode='lines',
-                name='1º Quartil',
+                name='3º Quartil',
                 line=dict(dash='dot', color='lightblue'),
             ))
             
@@ -81,12 +81,12 @@ if uploaded_file:
                 line=dict(color='blue')
             ))
             
-            # 3º Quartil
+            # 1º Quartil
             fig.add_trace(go.Scatter(
                 x=agrupado['MesAno'],
-                y=agrupado['q3'],
+                y=agrupado['q1'],
                 mode='lines',
-                name='3º Quartil',
+                name='1º Quartil',
                 line=dict(dash='dot', color='lightblue'),
             ))
             
