@@ -50,13 +50,13 @@ if uploaded_file:
 
             # 📈 Gráfico
             fig = go.Figure()
+            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q3'],
+                                     mode='lines', name='3º Quartil', line=dict(dash='dot', color='lightblue'),
+                                     fill='tonexty', fillcolor='rgba(173,216,230,0.3)'))  # faixa entre q1 e q3            
             fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['mediana'],
                                      mode='lines+markers', name='Mediana', line=dict(color='blue')))
             fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q1'],
                                      mode='lines', name='1º Quartil', line=dict(dash='dot', color='lightblue')))
-            fig.add_trace(go.Scatter(x=agrupado['MesAno'], y=agrupado['q3'],
-                                     mode='lines', name='3º Quartil', line=dict(dash='dot', color='lightblue'),
-                                     fill='tonexty', fillcolor='rgba(173,216,230,0.3)'))  # faixa entre q1 e q3
 
             fig.update_layout(
                 title="Tempo de Espera (dias) por Mês",
